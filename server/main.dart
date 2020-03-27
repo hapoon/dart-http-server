@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_framework/http.dart';
 
+import 'service/user_service.dart';
+
 Future main() async {
   var app = Angel();
   var http = AngelHttp(app);
@@ -16,6 +18,8 @@ Future main() async {
     ..write(data)
     ..close();
   });
+  var userService = User();
+  userService.create("Bob");
 
   await http.startServer('localhost',8080);
 }
