@@ -2,7 +2,8 @@ name: Dart CI
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - '**'
   pull_request:
     branches: [ master ]
 
@@ -12,13 +13,50 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image:  google/dart:latest
+      image: google/dart:latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Install dependencies
-      run: pub get
-    - name: Run tests
-      run: pub run test
-    - name: Build native
-      run: dart2native server/main.dart -o bin/dart-http-server
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run:  pub get
+      - name: Run tests
+        run:  pub run test
+      - name: Build native
+        run:  dart2native server/main.dart -o bin/dart-http-server
+      - name: List native image
+        run:  ls -l bin
+      - name: Upload binary
+        uses: actions/upload-artifact@v1
+        with:
+          name: dart-http-server-bin
+          path: bin/dart-http-server
+      - name: echo env
+        run:  echo $GITHUB_REF && env
+
+  push-image:
+    
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download binary created by build job
+        uses: actions/download-artifact@v1
+        with:
+          name: dart-http-server-bin
+          path: bin/
+      - name: List binary
+        run:  ls -l bin
+      - name: Docker process
+        run:  docker ps
+      - name: Echo env
+        run:  env
+      - name: Build and Push container
+        uses: docker/build-push-action@v1
+        with:
+          username:     hapoon
+          password:     ${{ secrets.DockerHubAccessToken }}
+          repository:   hapoon/dart-http-server
+          tag_with_ref: true
+
